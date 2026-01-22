@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pizzaria | Gestão de Estoque</title>
+
+<style>
+*{box-sizing:border-box;font-family:"Segoe UI",Arial;margin:0;padding:0}
+body{background:#f6f7f9}
+
+/* ===================== LOGIN ===================== */
+.login-modal{
+  position:fixed;
+  inset:0;
+  background:rgb(0, 0, 0);
+  display:none; /* controla via JS */
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+}
+.login-box{
+  background:#111;
+  padding:30px;
+  width:320px;
+  border-radius:14px;
+  text-align:center;
+  box-shadow:0 20px 40px rgba(0,0,0,.6);
+}
+.login-box h2{color:#fff;margin-bottom:18px}
+.login-box input{
+  width:100%;
+  padding:10px;
+  margin-bottom:12px;
+  border:none;
+  border-radius:8px;
+  font-size:14px;
+}
+.login-box button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#1e7e34;
+  color:#fff;
+  font-size:15px;
+  cursor:pointer;
+}
+.login-box button:hover{ background:#16662a; }
+.login-error{color:#f87171;font-size:13px;margin-top:8px;min-height:18px}
+
+/* TOPBAR */
+.topbar{
+  position:fixed;top:0;left:0;width:100%;height:60px;background:#fff;
+  border-bottom:1px solid #ddd;display:flex;align-items:center;
+  justify-content:space-between;padding:0 24px;z-index:1000
+}
+.left{display:flex;align-items:center;gap:18px}
+.nav{display:flex;align-items:center;gap:8px}
+.nav button{
+  border:none;background:none;padding:8px 14px;border-radius:6px;
+  cursor:pointer;font-size:14px
+}
+.nav button:hover{background:#f0f0f0}
+.nav button.active{background:#e6f4ea;color:#1e7e34;font-weight:600}
+
+/* DROPDOWN */
+.menu{position:relative}
+.dropdown{
+  display:none;position:absolute;top:42px;left:0;background:#fff;
+  border:1px solid #ddd;border-radius:8px;min-width:220px;
+  box-shadow:0 4px 10px rgba(0,0,0,.08);overflow:hidden
+}
+.dropdown div{padding:10px;cursor:pointer}
+.dropdown div:hover{background:#f0f0f0}
+
+/* CONTENT */
+.content{padding:90px 30px}
+h2{font-size:22px}
+h3{font-size:18px}
+
+/* CARDS */
+.cards{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:16px;margin:18px 0 25px
+}
+.card{
+  background:#fff;padding:18px;border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)
+}
+.card span{font-size:13px;color:#666}
+.card strong{display:block;margin-top:6px;font-size:20px}
+.card input{width:100%;padding:6px;margin-top:6px;border:1px solid #ccc;border-radius:8px}
+.card.alert strong{color:#d9534f}
+
+/* BOX */
+.box{
+  background:#fff;padding:20px;border-radius:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)
+}
+
+/* SEARCH */
+.search-bar{
+  display:flex;align-items:center;gap:8px;
+  margin:10px 0 12px
+}
+.search-bar span{font-size:18px}
+.search-bar input{
+  flex:1;padding:8px 10px;border-radius:8px;
+  border:1px solid #ccc;font-size:14px
+}
+
+/* SCROLL */
+.scroll{
+  max-height:320px;overflow-y:auto;border:1px solid #eee;
+  border-radius:8px
+}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+th,td{
+  padding:10px;border-bottom:1px solid #eee;font-size:14px;
+  text-align:center;
+}
+th{background:#fafafa;color:#666;position:sticky;top:0;z-index:1}
+td:first-child, th:first-child,
+td:nth-child(2), th:nth-child(2){ text-align:left; }
+
+/* INPUTS */
+input.qtd, input.custo{
+  width:90px;padding:6px;text-align:center;border:1px solid #ccc;border-radius:6px;
+}
+
+/* BUTTONS */
+.small{
+  padding:6px 10px;border-radius:8px;font-size:13px;
+  border:none;cursor:pointer
+}
+.btnInativar{background:#999;color:#fff}
+.btnReativar{background:#1e7e34;color:#fff}
+.btnExcluir{background:#d9534f;color:#fff}
+.primary{
+  background:#1e7e34;color:#fff;border:none;
+  padding:10px 18px;border-radius:8px;cursor:pointer
+}
+.secondary{
+  background:#777;color:#fff;border:none;
+  padding:10px 18px;border-radius:8px;cursor:pointer
+}
+
+/* ACTIONS */
+.actions{
+  display:flex;justify-content:space-between;align-items:center;margin-top:15px;gap:12px
+}
+.actions .right{display:flex;gap:10px;flex-wrap:wrap}
+
+/* PAGES */
+.page{display:none}
+#pageGestao{display:block}
+
+/* DASHBOARD */
+canvas{width:100%;max-width:980px;height:360px}
+
+/* MODAL */
+.modal{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);
+  align-items:center;justify-content:center;z-index:2000
+}
+.modal-content{
+  background:#fff;padding:20px;border-radius:10px;width:400px;max-width:92vw
+}
+.modal-content h3{margin-bottom:10px}
+.modal-content label{font-size:12px;color:#666;display:block;margin-bottom:4px}
+.modal-content input,select{
+  width:100%;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:8px
+}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end}
+.hint{font-size:12px;color:#777;margin:-4px 0 10px}
+.note{font-size:13px;color:#666;margin-top:6px}
+.badge{
+  display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:#f0f0f0;color:#333
+}
+</style>
+</head>
+
+<body>
+
+<!-- ===================== MODAL LOGIN ===================== -->
+<div id="loginModal" class="login-modal">
+  <div class="login-box">
+    <h2>Acesso Restrito</h2>
+    <input type="text" id="loginUser" placeholder="Usuário" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="Senha" autocomplete="current-password">
+    <button onclick="doLogin()">Entrar</button>
+    <div id="loginError" class="login-error"></div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="left">
+    <strong>🍕 Pizzaria</strong>
+
+    <div class="nav">
+      <button id="btnGestao" class="active" onclick="showPage('Gestao')">Gestão</button>
+      <button id="btnDashboard" onclick="showPage('Dashboard')">Dashboard</button>
+      <button id="btnHistorico" onclick="showPage('Historico')">Histórico</button>
+
+      <div class="menu">
+        <button id="btnCadastro" onclick="toggleMenu()">Cadastro ▾</button>
+        <div class="dropdown" id="dropdown">
+          <div onclick="openAddModal()">➕ Adicionar insumo</div>
+          <div onclick="openInativos()">📦 Insumos inativos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px">
+    <span></span>
+    <button class="small btnExcluir" onclick="logout()">Sair</button>
+  </div>
+</header>
+
+<main class="content">
+
+  <!-- ===================== GESTÃO ===================== -->
+  <section id="pageGestao" class="page">
+    <h2 id="tituloGestao">Balanço de Estoque – CMV Semanal</h2>
+
+    <div class="cards" id="cardsGestao">
+      <div class="card">
+        <span>Estoque Final</span>
+        <strong id="estoqueFinal">R$ 0,00</strong>
+      </div>
+
+      <div class="card">
+        <span>Compras da Semana (R$)</span>
+        <input id="compras" type="number" step="0.01" value="0">
+      </div>
+
+      <div class="card">
+        <span>Faturamento (R$)</span>
+        <input id="faturamento" type="number" step="0.01" value="0">
+      </div>
+
+      <div class="card alert">
+        <span>CMV (%)</span>
+        <strong id="cmvPerc">--</strong>
+      </div>
+    </div>
+
+    <div class="box">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <h3 id="tituloTabela">Contagem Física do Estoque</h3>
+        <span class="badge" id="badgeModo">Ativos</span>
+      </div>
+
+      <div class="search-bar">
+        <span>🔍</span>
+        <input id="busca" placeholder="Buscar por COD CD ou ingrediente..." oninput="renderTabela()">
+      </div>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>COD CD</th>
+              <th>Ingrediente</th>
+              <th>Qtd</th>
+              <th>Un</th>
+              <th>Custo</th>
+              <th>Total</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody id="lista"></tbody>
+        </table>
+      </div>
+
+      <div class="actions" id="acoesGestao">
+        <strong>Total do Estoque: <span id="total">R$ 0,00</span></strong>
+
+        <div class="right">
+          <button class="secondary" onclick="exportarContagemAtual()">📥 Salvar Contagem (Excel)</button>
+          <button class="primary" onclick="salvarBalanco()">💾 Salvar Balanço</button>
+        </div>
+      </div>
+
+      <div class="note" id="noteInativos" style="display:none">
+        Você está vendo <b>insumos inativos</b>. Clique em <b>Reativar</b> para voltar para a lista de ativos.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <section id="pageDashboard" class="page">
+    <div class="box">
+      <h2>Evolução do CMV (%)</h2>
+      <canvas id="grafico"></canvas>
+      <div class="note">Os pontos vêm dos balanços salvos em <b>Gestão</b>.</div>
+    </div>
+  </section>
+
+  <!-- ===================== HISTÓRICO ===================== -->
+  <section id="pageHistorico" class="page">
+    <div class="box">
+      <h2>Histórico de CMV</h2>
+      <div class="note">
+        Aqui aparece cada balanço salvo (CMV%), com opção de baixar o <b>arquivo da contagem daquele balanço</b> e deletar com senha <b>ADM</b>.
+      </div>
+
+      <div style="margin-top:14px" class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Data/Hora</th>
+              <th>CMV (%)</th>
+              <th>Compras</th>
+              <th>Faturamento</th>
+              <th>Arquivo</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody id="listaHistorico"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== MODAL ADD INSUMO ===================== -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>Adicionar Insumo</h3>
+
+    <label>COD CD (manual)</label>
+    <input id="codcd" placeholder="Ex: 010">
+
+    <label>Ingrediente</label>
+    <input id="nome" placeholder="Ex: Azeitona fatiada">
+
+    <label>Unidade</label>
+    <select id="un">
+      <option value="kg">kg</option>
+      <option value="L">L</option>
+      <option value="un">un</option>
+    </select>
+
+    <label>Custo unitário padrão (R$)</label>
+    <input id="custo" type="number" step="0.01" placeholder="Ex: 12.50">
+
+    <div class="hint">O insumo será cadastrado como <b>Ativo</b> e aparecerá na contagem.</div>
+
+    <div class="modal-actions">
+      <button class="secondary" onclick="closeAddModal()">Cancelar</button>
+      <button class="primary" onclick="salvarInsumo()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== CONFIG ===================== */
+const API_URL = "http://localhost:3000"; // troque pela URL pública da sua API quando publicar
+
+/* ===================== LOGIN ===================== */
+const LOGIN_USER = "estoque_CB";
+const LOGIN_PASS = "123";
+
+function showLogin(){
+  const m = document.getElementById("loginModal");
+  const err = document.getElementById("loginError");
+  if(err) err.textContent = "";
+  if(m) m.style.display = "flex";
+  setTimeout(()=>document.getElementById("loginUser")?.focus(), 50);
+}
+function hideLogin(){
+  const m = document.getElementById("loginModal");
+  if(m) m.style.display = "none";
+}
+function doLogin(){
+  const u = (document.getElementById("loginUser")?.value || "").trim();
+  const p = (document.getElementById("loginPass")?.value || "").trim();
+  const err = document.getElementById("loginError");
+
+  if(u === LOGIN_USER && p === LOGIN_PASS){
+    localStorage.setItem("logado","true");
+    hideLogin();
+  }else{
+    if(err) err.textContent = "Usuário ou senha inválidos";
+  }
+}
+function logout(){
+  localStorage.removeItem("logado");
+  location.reload();
+}
+document.addEventListener("keydown",(e)=>{
+  const modal = document.getElementById("loginModal");
+  if(!modal) return;
+  const open = modal.style.display === "flex";
+  if(open && e.key === "Enter"){
+    e.preventDefault();
+    doLogin();
+  }
+});
+window.addEventListener("load",()=>{
+  if(localStorage.getItem("logado")==="true") hideLogin();
+  else showLogin();
+});
+
+/* ===================== DADOS =====================
+  A PARTIR DAQUI O APP USA A API + NEON (PostgreSQL)
+  Campos (iguais ao banco):
+  - INSUMOS: { cod, nome, un, custo, ativo }
+  - BALANCOS: { id, data_hora, cmv, compras, faturamento, estoque_final, snapshot }
+*/
+let itens = [];
+let balancos = [];
+
+// dados temporários da interface (NÃO salvar no banco)
+let sessao = {};            // { [cod]: { qtd:number, custo:number } }
+let modoTabela = "ativos";  // "ativos" | "inativos"
+let currentPage = "Gestao";
+
+/* ===================== HELPERS ===================== */
+function money(v){
+  return (Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function toNumber(v){
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+function dateTimeBR(isoOrDate){
+  const d = new Date(isoOrDate);
+  return isNaN(d.getTime()) ? "" : d.toLocaleString("pt-BR");
+}
+function dateShortBR(isoOrDate){
+  const d = new Date(isoOrDate);
+  return isNaN(d.getTime()) ? "" : d.toLocaleDateString("pt-BR",{day:"2-digit",month:"short"});
+}
+function asBalanco(b){
+  // Normaliza para garantir que o front enxergue os campos do banco
+  return {
+    id: b.id,
+    data_hora: b.data_hora,
+    cmv: toNumber(b.cmv),
+    compras: toNumber(b.compras),
+    faturamento: toNumber(b.faturamento),
+    estoque_final: toNumber(b.estoque_final),
+    snapshot: Array.isArray(b.snapshot) ? b.snapshot : []
+  };
+}
+
+/* ===================== API ===================== */
+async function carregarInsumos(){
+  try {
+    const r = await fetch(`${API_URL}/insumos`);
+    if(!r.ok) throw new Error("Erro ao buscar insumos da API");
+    const data = await r.json();
+    itens = Array.isArray(data) ? data : [];
+    renderTabela();
+  } catch (err){
+    console.error("Erro ao carregar insumos:", err);
+    alert("Não foi possível carregar os insumos do servidor.");
+  }
+}
+
+async function carregarBalancos(){
+  try {
+    const r = await fetch(`${API_URL}/balancos`);
+    if(!r.ok) throw new Error("Erro ao buscar balanços da API");
+    const data = await r.json();
+    balancos = (Array.isArray(data) ? data : []).map(asBalanco);
+    console.log("Balanços carregados:", balancos);
+    renderHistorico();
+    desenharGrafico();
+  } catch (err){
+    console.error("Erro ao carregar balanços:", err);
+    alert("Não foi possível carregar o histórico de balanços.");
+  }
+}
+
+/* ===================== MENU DROPDOWN ===================== */
+function toggleMenu(){
+  dropdown.style.display = dropdown.style.display==="block" ? "none" : "block";
+}
+document.addEventListener("click",(e)=>{
+  if(!e.target.closest(".menu")) dropdown.style.display="none";
+});
+
+/* ===================== NAV PAGES ===================== */
+function showPage(name){
+  currentPage = name;
+  pageGestao.style.display = (name==="Gestao") ? "block" : "none";
+  pageDashboard.style.display = (name==="Dashboard") ? "block" : "none";
+  pageHistorico.style.display = (name==="Historico") ? "block" : "none";
+
+  btnGestao.classList.toggle("active", name==="Gestao");
+  btnDashboard.classList.toggle("active", name==="Dashboard");
+  btnHistorico.classList.toggle("active", name==="Historico");
+
+  if(name==="Dashboard") desenharGrafico();
+  if(name==="Historico") renderHistorico();
+  if(name==="Gestao") renderTabela();
+}
+
+/* ===================== MODAL ADD ===================== */
+function openAddModal(){
+  dropdown.style.display="none";
+  modal.style.display="flex";
+  setTimeout(()=>codcd.focus(), 50);
+}
+function closeAddModal(){
+  modal.style.display="none";
+}
+modal.addEventListener("click",(e)=>{ if(e.target===modal) closeAddModal(); });
+
+/* ===================== INATIVOS ===================== */
+function openInativos(){
+  dropdown.style.display="none";
+  modoTabela = "inativos";
+  badgeModo.innerText = "Inativos";
+  noteInativos.style.display = "block";
+  cardsGestao.style.display = "none";
+  acoesGestao.style.display = "none";
+  showPage("Gestao");
+  renderTabela();
+}
+function openAtivos(){
+  modoTabela = "ativos";
+  badgeModo.innerText = "Ativos";
+  noteInativos.style.display = "none";
+  cardsGestao.style.display = "grid";
+  acoesGestao.style.display = "flex";
+  renderTabela();
+}
+
+/* ===================== TABELA ===================== */
+function ensureSessaoForItem(it){
+  if(!sessao[it.cod]){
+    sessao[it.cod] = { qtd: 0, custo: toNumber(it.custo) };
+  }else{
+    // se o custo do banco mudou, sincroniza na sessão
+    if(!Number.isFinite(Number(sessao[it.cod].custo))) sessao[it.cod].custo = toNumber(it.custo);
+  }
+}
+
+function renderTabela(){
+  lista.innerHTML = "";
+  const termo = (busca.value||"").trim().toLowerCase();
+
+  itens.forEach((it)=>{
+    if(modoTabela==="ativos" && !it.ativo) return;
+    if(modoTabela==="inativos" && it.ativo) return;
+
+    if(termo){
+      const hit = String(it.cod).toLowerCase().includes(termo) || String(it.nome).toLowerCase().includes(termo);
+      if(!hit) return;
+    }
+
+    ensureSessaoForItem(it);
+
+    const s = sessao[it.cod];
+    const totalLinha = toNumber(s.qtd) * toNumber(s.custo);
+
+    const qtdCell = (modoTabela==="ativos")
+      ? `<input class="qtd" type="number" min="0" step="0.01" value="${toNumber(s.qtd)}"
+           oninput="setQtd('${it.cod}', this.value)">`
+      : `-`;
+
+    const custoCell = (modoTabela==="ativos")
+      ? `<input class="custo" type="number" min="0" step="0.01" value="${toNumber(s.custo)}"
+           oninput="setCusto('${it.cod}', this.value)">`
+      : toNumber(it.custo).toFixed(2);
+
+    const acaoBtn = it.ativo
+      ? `<button class="small btnInativar" onclick="inativar('${it.cod}')">Inativar</button>`
+      : `<button class="small btnReativar" onclick="reativar('${it.cod}')">Reativar</button>`;
+
+    lista.innerHTML += `
+      <tr>
+        <td>${it.cod}</td>
+        <td>${it.nome}</td>
+        <td>${qtdCell}</td>
+        <td>${it.un}</td>
+        <td>${custoCell}</td>
+        <td id="t_${it.cod}">${money(totalLinha)}</td>
+        <td>${acaoBtn}</td>
+      </tr>
+    `;
+  });
+
+  if(modoTabela==="ativos"){
+    atualizarTotais();
+  } else {
+    total.innerText = money(0);
+    estoqueFinal.innerText = money(0);
+    cmvPerc.innerText = "--";
+  }
+}
+
+function setQtd(cod, v){
+  if(!sessao[cod]) sessao[cod] = {qtd:0,custo:0};
+  sessao[cod].qtd = parseFloat(v) || 0;
+  atualizarLinha(cod);
+  atualizarTotais();
+}
+
+async function setCusto(cod, v){
+  const novoCusto = parseFloat(v) || 0;
+
+  if(!sessao[cod]) sessao[cod] = {qtd:0,custo:0};
+  sessao[cod].custo = novoCusto;
+
+  // atualiza na lista local
+  const idx = itens.findIndex(x => String(x.cod) === String(cod));
+  if(idx >= 0){
+    itens[idx].custo = novoCusto;
+  }
+
+  atualizarLinha(cod);
+  atualizarTotais();
+
+  // tenta persistir no backend (requer endpoint PUT/PATCH no seu server.js)
+  try{
+    const r = await fetch(`${API_URL}/insumos/${encodeURIComponent(cod)}`, {
+      method: "PUT",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ custo: novoCusto })
+    });
+    if(!r.ok){
+      // não derruba o app; só avisa no console
+      console.warn("API não atualizou custo (verifique endpoint PUT /insumos/:cod).");
+    }else{
+      // opcional: recarrega para garantir sincronismo com o banco
+      // await carregarInsumos();
+    }
+  }catch(e){
+    console.warn("Falha ao persistir custo na API:", e);
+  }
+}
+
+function atualizarLinha(cod){
+  const s = sessao[cod] || {qtd:0,custo:0};
+  const totalLinha = toNumber(s.qtd) * toNumber(s.custo);
+  const el = document.getElementById("t_"+cod);
+  if(el) el.innerText = money(totalLinha);
+}
+
+function atualizarTotais(){
+  let soma = 0;
+  itens.forEach(it=>{
+    if(!it.ativo) return;
+    const s = sessao[it.cod];
+    if(!s) return;
+    soma += toNumber(s.qtd) * toNumber(s.custo);
+  });
+  total.innerText = money(soma);
+  estoqueFinal.innerText = money(soma);
+  cmvPerc.innerText = "--";
+}
+
+/* ===================== ATIVAR / INATIVAR ===================== */
+async function inativar(cod){
+  // atualiza local imediato (UI)
+  const idx = itens.findIndex(x => String(x.cod) === String(cod));
+  if(idx >= 0){
+    itens[idx].ativo = false;
+    renderTabela();
+  }
+
+  // tenta persistir no backend (requer endpoint PATCH/PUT no seu server.js)
+  try{
+    const r = await fetch(`${API_URL}/insumos/${encodeURIComponent(cod)}/ativo`, {
+      method: "PATCH",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ ativo: false })
+    });
+    if(!r.ok){
+      console.warn("API não inativou (verifique PATCH /insumos/:cod/ativo).");
+    }else{
+      // await carregarInsumos();
+    }
+  }catch(e){
+    console.warn("Falha ao inativar na API:", e);
+  }
+}
+
+async function reativar(cod){
+  const idx = itens.findIndex(x => String(x.cod) === String(cod));
+  if(idx >= 0){
+    itens[idx].ativo = true;
+    openAtivos();
+  }
+
+  try{
+    const r = await fetch(`${API_URL}/insumos/${encodeURIComponent(cod)}/ativo`, {
+      method: "PATCH",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ ativo: true })
+    });
+    if(!r.ok){
+      console.warn("API não reativou (verifique PATCH /insumos/:cod/ativo).");
+    }else{
+      // await carregarInsumos();
+    }
+  }catch(e){
+    console.warn("Falha ao reativar na API:", e);
+  }
+}
+
+/* ===================== CADASTRAR INSUMO ===================== */
+async function salvarInsumo(){
+  const cod = (codcd.value||"").trim();
+  const nomeInsumo = (nome.value||"").trim();
+  const unidade = un.value;
+  const custoUnit = parseFloat(custo.value);
+
+  if(!cod || !nomeInsumo || !unidade || !isFinite(custoUnit) || custoUnit < 0){
+    alert("Preencha COD CD, Ingrediente, Unidade e Custo corretamente.");
+    return;
+  }
+  if(itens.some(x => String(x.cod).trim() === cod)){
+    alert("Já existe um insumo com esse COD CD.");
+    return;
+  }
+
+  // atualiza local para aparecer imediatamente
+  itens.push({cod, nome:nomeInsumo, un:unidade, custo:custoUnit, ativo:true});
+  sessao[cod] = {qtd:0, custo:custoUnit};
+  renderTabela();
+
+  // tenta persistir no backend (requer endpoint POST /insumos no seu server.js)
+  try{
+    const r = await fetch(`${API_URL}/insumos`, {
+      method:"POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({cod, nome: nomeInsumo, un: unidade, custo: custoUnit, ativo: true})
+    });
+    if(!r.ok){
+      console.warn("API não cadastrou insumo (verifique POST /insumos).");
+      // se quiser ser rígido: alert e remover local
+      // alert("A API não cadastrou o insumo. Verifique o backend.");
+    }else{
+      // opcional: recarrega para garantir dado igual ao banco
+      await carregarInsumos();
+    }
+  }catch(e){
+    console.warn("Falha ao cadastrar insumo na API:", e);
+  }
+
+  // limpa modal
+  codcd.value=""; nome.value=""; custo.value="";
+  closeAddModal();
+  openAtivos();
+  showPage("Gestao");
+}
+
+/* ===================== EXPORTAR CONTAGEM ATUAL (CSV/Excel) ===================== */
+function exportarContagemAtual(){
+  const agora = new Date();
+  const data = agora.toLocaleString("pt-BR");
+
+  let linhas = [];
+  linhas.push(["Data/Hora","COD CD","Ingrediente","Quantidade","Unidade","Custo Unitário","Total"].join(";"));
+
+  itens.forEach(it=>{
+    if(!it.ativo) return;
+    ensureSessaoForItem(it);
+    const s = sessao[it.cod];
+    const qtd = toNumber(s.qtd);
+    const custoU = toNumber(s.custo);
+    const totalL = qtd*custoU;
+
+    linhas.push([
+      `"${data}"`,
+      `"${it.cod}"`,
+      `"${it.nome}"`,
+      String(qtd).replace(".",","),
+      `"${it.un}"`,
+      custoU.toFixed(2).replace(".",","),
+      totalL.toFixed(2).replace(".",",")
+    ].join(";"));
+  });
+
+  const csv = linhas.join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `contagem_estoque_${agora.toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+/* ===================== SALVAR BALANÇO (POST /balancos) ===================== */
+async function salvarBalanco(){
+  if(modoTabela !== "ativos"){
+    alert("Volte para a lista de ATIVOS para salvar o balanço.");
+    return;
+  }
+
+  const comprasNum = parseFloat(compras.value) || 0;
+  const faturamentoNum = parseFloat(faturamento.value) || 0;
+
+  let estoqueFinalNum = 0;
+  let snapshot = [];
+
+  itens.forEach(it => {
+    if(!it.ativo) return;
+    ensureSessaoForItem(it);
+
+    const s = sessao[it.cod];
+    const qtd = toNumber(s.qtd);
+    const custoU = toNumber(s.custo);
+    const totalL = qtd * custoU;
+
+    estoqueFinalNum += totalL;
+
+    snapshot.push({
+      cod: it.cod,
+      nome: it.nome,
+      un: it.un,
+      qtd: qtd,
+      custo: custoU,
+      total: totalL
+    });
+  });
+
+  const cmv = faturamentoNum > 0 ? (comprasNum / faturamentoNum) * 100 : 0;
+  cmvPerc.innerText = faturamentoNum > 0 ? cmv.toFixed(2) + "%" : "--";
+
+  const resp = await fetch(`${API_URL}/balancos`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      cmv: Number(cmv.toFixed(2)),
+      compras: comprasNum,
+      faturamento: faturamentoNum,
+      estoque_final: estoqueFinalNum,
+      snapshot: snapshot
+    })
+  });
+
+  if(!resp.ok){
+    alert("Erro ao salvar balanço no servidor.");
+    return;
+  }
+
+  await carregarBalancos();
+  alert("Balanço salvo com sucesso.");
+}
+
+/* ===================== DASHBOARD (GRÁFICO) ===================== */
+function desenharGrafico(){
+  const canvas = document.getElementById("grafico");
+  if(!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 360;
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  if(!balancos || balancos.length === 0){
+    ctx.fillStyle="#333";
+    ctx.fillText("Nenhum CMV registrado ainda.", 20, 40);
+    return;
+  }
+
+  // ordena por data_hora (campo do banco)
+  const dados = balancos.slice().sort((a,b)=>new Date(a.data_hora)-new Date(b.data_hora));
+
+  const padding = 55;
+  const w = canvas.width - padding*2;
+  const h = canvas.height - padding*2;
+
+  const maxY = (Math.max(...dados.map(d=>toNumber(d.cmv))) * 1.2) || 10;
+
+  // eixos
+  ctx.strokeStyle="#999";
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(padding, padding);
+  ctx.lineTo(padding, padding+h);
+  ctx.lineTo(padding+w, padding+h);
+  ctx.stroke();
+
+  // ticks Y (0, 1/2, max)
+  ctx.fillStyle="#666";
+  ctx.font="12px Segoe UI, Arial";
+  const ticks = [0, maxY/2, maxY];
+  ticks.forEach(t=>{
+    const y = padding + h - (t/maxY)*h;
+    ctx.fillText(t.toFixed(0)+"%", 10, y+4);
+    ctx.strokeStyle="rgba(0,0,0,0.06)";
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(padding+w, y);
+    ctx.stroke();
+  });
+
+  // linha
+  ctx.strokeStyle="#1e7e34";
+  ctx.fillStyle="#1e7e34";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+
+  dados.forEach((d,i)=>{
+    const x = padding + (dados.length === 1 ? w/2 : (i/(dados.length-1))*w);
+    const y = padding + h - (toNumber(d.cmv)/maxY)*h;
+    if(i===0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // pontos + labels X
+  dados.forEach((d,i)=>{
+    const x = padding + (dados.length === 1 ? w/2 : (i/(dados.length-1))*w);
+    const y = padding + h - (toNumber(d.cmv)/maxY)*h;
+
+    ctx.fillStyle="#1e7e34";
+    ctx.beginPath();
+    ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fill();
+
+    // valor em cima do ponto
+    ctx.fillStyle="#333";
+    ctx.fillText(toNumber(d.cmv).toFixed(1)+"%", x-14, y-10);
+
+    // label X (curto)
+    ctx.fillText(dateShortBR(d.data_hora), x-18, padding+h+18);
+  });
+
+  ctx.fillStyle="#333";
+  ctx.fillText("CMV (%)", 10, 20);
+}
+
+/* ===================== HISTÓRICO ===================== */
+function renderHistorico(){
+  if(!listaHistorico) return;
+  listaHistorico.innerHTML = "";
+
+  if(!balancos || balancos.length === 0){
+    listaHistorico.innerHTML = `<tr><td colspan="6" style="text-align:left;color:#666;padding:14px">Nenhum balanço salvo ainda.</td></tr>`;
+    return;
+  }
+
+  balancos.forEach((b)=>{
+    listaHistorico.innerHTML += `
+      <tr>
+        <td>${dateTimeBR(b.data_hora)}</td>
+        <td>${toNumber(b.cmv).toFixed(2)}%</td>
+        <td>${money(b.compras)}</td>
+        <td>${money(b.faturamento)}</td>
+        <td>
+          <button class="small secondary" onclick="baixarCSVDoBalanco('${b.id}')">⬇ CSV</button>
+        </td>
+        <td>
+          <button class="small btnExcluir" onclick="deletarBalanco('${b.id}')">Excluir</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function baixarCSVDoBalanco(id){
+  const b = balancos.find(x => x.id === id);
+  if(!b){
+    alert("Balanço não encontrado.");
+    return;
+  }
+
+  let linhas = [];
+  linhas.push(["Data/Hora","COD CD","Ingrediente","Quantidade","Unidade","Custo Unitário","Total"].join(";"));
+
+  (b.snapshot || []).forEach(it=>{
+    linhas.push([
+      `"${dateTimeBR(b.data_hora)}"`,
+      `"${it.cod}"`,
+      `"${it.nome}"`,
+      String(toNumber(it.qtd)).replace(".",","),
+      `"${it.un}"`,
+      toNumber(it.custo).toFixed(2).replace(".",","),
+      toNumber(it.total).toFixed(2).replace(".",",")
+    ].join(";"));
+  });
+
+  const csv = linhas.join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  const d = new Date(b.data_hora);
+  const ymd = isNaN(d.getTime()) ? "balanco" : d.toISOString().slice(0,10);
+  a.download = `balanco_${ymd}.csv`;
+  a.click();
+}
+
+/* ===================== EXCLUIR BALANÇO (DELETE /balancos/:id) ===================== */
+async function deletarBalanco(id){
+  const senha = prompt("Digite a senha ADM para excluir este balanço:");
+  if(senha !== "adm"){
+    alert("Senha incorreta.");
+    return;
+  }
+
+  try{
+    const r = await fetch(`${API_URL}/balancos/${encodeURIComponent(id)}`, { method:"DELETE" });
+    if(!r.ok){
+      alert("A API não excluiu o balanço. Verifique se existe DELETE /balancos/:id no backend.");
+      return;
+    }
+    await carregarBalancos();
+    alert("Balanço excluído com sucesso.");
+  }catch(e){
+    console.error("Erro ao excluir:", e);
+    alert("Erro ao excluir no servidor.");
+  }
+}
+
+/* ===================== INICIALIZAÇÃO ===================== */
+document.addEventListener("DOMContentLoaded", ()=>{
+  carregarInsumos();
+  carregarBalancos();
+});
+</script>
+
+</body>
+</html>
